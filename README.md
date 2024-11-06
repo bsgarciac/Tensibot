@@ -1,5 +1,8 @@
 # TensiBot
 
+![Tensiometro](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRHYnMWqW00xN7Y6uNlCmrMv5CKvvq4SoS2g&s)
+
+
 **TensiBot** es una aplicación desarrollada para la **Fundación Santafé** que permite a las personas mayores enviar fotos de sus lecturas de tensiómetro a un chatbot de **WhatsApp**. Utiliza inteligencia artificial para reconocer los números en las imágenes y almacenarlos automáticamente, facilitando el monitoreo de la presión arterial y promoviendo la autonomía de los usuarios.
 
 ## Tecnologías utilizadas

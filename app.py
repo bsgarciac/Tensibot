@@ -4,9 +4,6 @@ import requests
 import os
 app = Flask(__name__)
 
-# admin
-# wrHS2aThDoAzKbZD
-
 conversations = {}
 messages = {
     'initial_data': "¡Hola! Para empezar, ¿cuál es tu documento de identidad?",
@@ -22,6 +19,11 @@ users = [
     {'id': '2', 'name': 'Pedro', 'phone': '+573003333333'},
     {'id': '3', 'name': 'María', 'phone': '+573004444444'}
 ]
+
+@app.route('/', methods=['GET'])
+def test():
+    return "Deployment done! The server is working."
+
 @app.route('/bot', methods=['POST'])
 def bot():
     # Incoming Data
