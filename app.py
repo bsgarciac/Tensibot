@@ -1,8 +1,8 @@
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 import requests
-app = Flask(__name__)
 
+app = Flask(__name__)
 
 USERS = [
     {'id': '1111', 'name': 'Brayan', 'phone': '+573144777544'},
@@ -20,13 +20,13 @@ def bot():
     bot = BotProcessor(phone_number)
 
     if phone_number not in CONVERSATIONS:
-        bot._set_user_status('initial_data')
+        bot.user_status = 'initial_data'
         resp.message(bot.messages['initial_data'])
         return str(resp)
     
     # Handle incoming messages
     message = ''
-    match bot._get_user_status():
+    match bot.user_status:
         case 'initial_data':
             message = bot.process_initial_data(incoming_msg)
         case 'menu':
@@ -37,7 +37,7 @@ def bot():
             message = bot.process_back(incoming_msg)
 
     # Back Button
-    if bot._get_user_status() not in ['initial_data', 'menu']:
+    if bot.user_status not in ['initial_data', 'menu']:
         message += '\n\n' + bot.messages['back']
 
     # Response
@@ -53,19 +53,21 @@ class BotProcessor:
             'initial_data': "¡Hola! Para empezar, ¿cuál es tu documento de identidad?",
             'back': '0. Volver al menú principal'
         }
-    
+
     def set_current_user(self):
         return next((user for user in USERS if user['phone'] == self.phone_number), {})
-    
-    def _get_user_status(self):
+
+    @property
+    def user_status(self):
         return CONVERSATIONS.get(self.phone_number, 'initial_data')
-    
-    def _set_user_status(self, status):
+
+    @user_status.setter
+    def user_status(self, status):
         CONVERSATIONS[self.phone_number] = status
-    
+
     def get_menu(self):
-        self._set_user_status('menu')
-        return f'¡Hola {self.current_user.get('name', '')}! ¿Qué deseas hacer?\n1. Procesar imagen\n2. Consultar información\n3. Actualizar datos'
+        self.user_status = 'menu'
+        return f'¡Hola {self.current_user.get("name", "")}! ¿Qué deseas hacer?\n1. Procesar imagen\n2. Consultar información\n3. Actualizar datos'
 
     def process_initial_data(self, incoming_message):
         if incoming_message not in [user['id'] for user in USERS]:
@@ -78,13 +80,13 @@ class BotProcessor:
     def process_menu(self, incoming_message):
         match incoming_message:
             case '1':
-                self._set_user_status('send_image')
+                self.user_status = 'send_image'
                 message = "Por favor envía la imagen que deseas procesar."
             case '2':
-                self._set_user_status('back')
+                self.user_status = 'back'
                 message = "'Consulta de información' aún no implementada."
             case '3':
-                self._set_user_status('back')
+                self.user_status = 'back'
                 message = "'Actualización de datos' aún no implementada."
             case _:
                 message = "Opción no válida."
@@ -100,7 +102,7 @@ class BotProcessor:
     def image_sent(self, incoming_message, request):
         # Back Button
         if incoming_message == '0':
-            return  self.get_menu()
+            return self.get_menu()
         
         # Process image
         num_media = int(request.values.get("NumMedia"))
@@ -116,12 +118,11 @@ class BotProcessor:
         img_filename = f"image_received.{media_type.split('/')[1]}"
         
         # Guardar temporalmente la imagén
-        # Guardar la imagen temporalmente
         with open(img_filename, 'wb') as handler:
             handler.write(img_data) 
 
         # Respuesta a la imagen recibida
-        return "Tus resultados son:"        
+        return "Tus resultados son:"
 
 
 @app.route('/test', methods=['GET'])
