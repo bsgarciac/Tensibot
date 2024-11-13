@@ -6,8 +6,8 @@ app = Flask(__name__)
 
 USERS = [
     {'id': '1111', 'name': 'Brayan', 'phone': '+573144777544'},
-    {'id': '2222', 'name': 'Pedro', 'phone': '+573003333333'},
-    {'id': '3333', 'name': 'María', 'phone': '+573004444444'}
+    {'id': '2222', 'name': 'Juan', 'phone': '+573003333333'},
+    {'id': '3333', 'name': 'Profe', 'phone': '+573004444444'}
 ]
 CONVERSATIONS = {}
 
