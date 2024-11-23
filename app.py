@@ -1,8 +1,20 @@
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 import requests
+import keras_ocr
+from utils.utils import download_models, resize_image
+    
+download_models()
 
-app = Flask(__name__)
+detector = keras_ocr.detection.Detector(weights='clovaai_general')
+recognizer = keras_ocr.recognition.Recognizer(
+    weights='kurapan'
+)
+#cargar los modelos entrenados para reconocer los dígitos
+detector.model.load_weights('./models/detector.h5')
+recognizer.model.load_weights('./models/recognizer.h5')
+
+pipeline = keras_ocr.pipeline.Pipeline(detector=detector, recognizer=recognizer)
 
 USERS = [
     {'id': '1111', 'name': 'Brayan', 'phone': '+573144777544'},
@@ -10,6 +22,8 @@ USERS = [
     {'id': '3333', 'name': 'Profe', 'phone': '+573004444444'}
 ]
 CONVERSATIONS = {}
+
+app = Flask(__name__)
 
 @app.route('/bot', methods=['POST'])
 def bot():
@@ -121,12 +135,25 @@ class BotProcessor:
         with open(img_filename, 'wb') as handler:
             handler.write(img_data) 
 
+        
+
         # Respuesta a la imagen recibida
         return "Tus resultados son:"
 
-
 @app.route('/test', methods=['GET'])
 def test_route():
+    resized_image = resize_image("test.jpeg")
+    resized_image.save("test.jpeg")
+    images = [ keras_ocr.tools.read('test.jpeg') ]
+    prediction_groups = pipeline.recognize(images)
+
+    texto = []
+    for img in prediction_groups:
+        for a,b in img:
+            print(img)
+            texto.append(a)
+
+    print(texto)
     return "GET request received! The server is working."
 
 if __name__ == '__main__':
