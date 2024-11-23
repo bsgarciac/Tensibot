@@ -8,6 +8,13 @@ MODELS = [
 ] 
 
 def download_models():
+    # Ensure the "models" folder exists
+    models_folder = "models"
+    if not os.path.exists(models_folder):
+        os.makedirs(models_folder)
+        print(f"Created folder: {models_folder}")
+
+    # Download the models
     for model in MODELS:
         model_path = f"models/{model['name']}"
         if not os.path.exists(model_path):
