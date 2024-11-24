@@ -2,6 +2,7 @@ import os
 import gdown
 from PIL import Image
 import requests
+
 # Access variables
 ACCOUNT_SID = os.getenv("ACCOUNT_SID")
 AUTH_TOKEN = os.getenv("AUTH_TOKEN")
