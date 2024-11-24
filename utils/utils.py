@@ -1,6 +1,10 @@
 import os
 import gdown
 from PIL import Image
+import requests
+# Access variables
+ACCOUNT_SID = os.getenv("ACCOUNT_SID")
+AUTH_TOKEN = os.getenv("AUTH_TOKEN")
 
 MODELS = [
    {'name': 'detector.h5', 'url': 'https://drive.google.com/uc?id=1v4t-YZUhspSY48PMibRnlzjNVYuAPAPT'},
@@ -44,3 +48,34 @@ def resize_image(image_path, max_width=833, max_height=800):
       print('Imagen se mantiene')
 
       return image
+    
+
+def save_file(media_url, content_type):
+    from base64 import b64encode
+
+    # Prepare the basic authentication header
+    auth_str = f"{ACCOUNT_SID}:{AUTH_TOKEN}"
+    auth_bytes = auth_str.encode('utf-8')
+    auth_b64 = b64encode(auth_bytes).decode('utf-8')
+    headers = {'Authorization': 'Basic ' + auth_b64}
+
+    # Make the request
+    r = requests.get(media_url, headers=headers)
+    filename = None
+
+    if content_type == 'image/jpeg':
+        filename = f'image.jpg'
+    elif content_type == 'image/png':
+        filename = f'image.png'
+
+    if filename:
+      with open(filename, 'wb') as f:
+        f.write(r.content)
+    return filename
+
+def remove_file(file_path):
+    if os.path.exists(file_path):
+      os.remove(file_path)
+      print(f"{file_path} has been deleted.")
+    else:
+        print(f"{file_path} does not exist.")

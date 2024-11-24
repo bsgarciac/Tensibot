@@ -2,7 +2,7 @@ from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 import requests
 import keras_ocr
-from utils.utils import download_models, resize_image
+from utils.utils import download_models, resize_image, save_file, remove_file
     
 download_models()
 
@@ -114,47 +114,67 @@ class BotProcessor:
         return message
 
     def image_sent(self, incoming_message, request):
+        print("procesando imagen")
         # Back Button
         if incoming_message == '0':
             return self.get_menu()
-        
+
         # Process image
         num_media = int(request.values.get("NumMedia"))
         if num_media == 0:
             return "Por favor envía una imagen."
+
+        # Process the received image
+        media_url = request.form.get('MediaUrl0')
+        media_type = request.form.get('MediaContentType0')
+
+        img_filename = save_file(media_url, media_type)
+
+        if not img_filename:
+             return "Por favor envía una imagen valida!." 
+
+        # Resize image (optional, based on your model's needs)
+        resized_image = resize_image(img_filename)
+        resized_image.save(img_filename)
+
+        # Perform OCR
+        images = [keras_ocr.tools.read(img_filename)]
+        prediction_groups = pipeline.recognize(images)
+
+        words = []
+        for prediction in prediction_groups:
+            for value, _ in prediction:
+                words.append(value)
+
+        remove_file(img_filename)
+        print(words)
+        data = [
+            {'name': 'Diastolica', 'value': 'No se encontró'},
+            {'name': 'Sistolica', 'value': 'No se encontró'},
+            {'name': 'Pulso', 'value': 'No se encontró'}
+        ]
+        index = 0
+        for string in words:
+            # Break if we have found all the values
+            if index > len(data):
+                break
+
+            # Check if the string is a number
+            try:
+                data[index]['value'] = int(string)
+                index += 1
+            except ValueError:
+                continue
         
-        # Procesar la imagen recibida
-        media_url = request.values.get("MediaUrl0")
-        media_type = request.values.get("MediaContentType0")
-        
-        # Descarga la imagen
-        img_data = requests.get(media_url).content
-        img_filename = f"image_received.{media_type.split('/')[1]}"
-        
-        # Guardar temporalmente la imagén
-        with open(img_filename, 'wb') as handler:
-            handler.write(img_data) 
+        # Prepare the response
+        response = "Gracias por reportar tu información!\n"
+        for item in data:
+            response += f"\n{item['name']}: {item['value']}"
 
-        
-
-        # Respuesta a la imagen recibida
-        return "Tus resultados son:"
-
-@app.route('/test', methods=['GET'])
-def test_route():
-    resized_image = resize_image("test.jpeg")
-    resized_image.save("test.jpeg")
-    images = [ keras_ocr.tools.read('test.jpeg') ]
-    prediction_groups = pipeline.recognize(images)
-
-    texto = []
-    for img in prediction_groups:
-        for a,b in img:
-            print(img)
-            texto.append(a)
-
-    print(texto)
-    return "GET request received! The server is working."
+        response += "\n\nRecuerda volver mañana para reportar tus valores nuevamente."
+        response += "Ten un buen día!"
+        # Return the results
+        return  response
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)
